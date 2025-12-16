@@ -221,6 +221,29 @@ class Gravity(pg.sprite.Sprite):
         if self.life < 0:
             self.kill()
 
+class Item(pg.sprite.Sprite):
+    """
+    Item の Docstring
+    """
+    def __init__(self):
+        super().__init__()
+        self.num = random.randint(0,2)
+        self.item = pg.image.load(f"fig/{self.num}.png")
+        self.image = pg.transform.rotozoom(self.item, random.randint(0,360), 1)
+        self.rect = self.image.get_rect()
+        self.rect.center =  WIDTH, random.randint(0, HEIGHT)
+        self.vx, self.vy = -6, 0
+
+    # def get_item(item):
+    #     """
+    #     get_item の Docstring
+    #     :param item: 説明
+    #     """
+    #     self.item.
+
+    def update(self):
+        self.rect.move_ip(self.vx, self.vy)
+
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH, HEIGHT))
@@ -232,6 +255,8 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     gravitys = pg.sprite.Group()
+
+    items = pg.sprite.Group()
 
     tmr = 0
     clock = pg.time.Clock()
@@ -259,6 +284,9 @@ def main():
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
                 #bombs.add(Bomb(emy, bird))
 
+        if tmr%100 == 0:  # 200フレームに1回，敵機を出現させる
+            items.add(Item())
+
         #for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
             #exps.add(Explosion(emy, 100))  # 爆発エフェクト
             #score.value += 10  # 10点アップ
@@ -275,6 +303,12 @@ def main():
                     return
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
+
+        for item in pg.sprite.spritecollide(bird, items, True): # アイテムとの衝突判定
+            pass
+            # item.get_item(item)
+
+
     
         if len(gravitys)>0:
             for emy in emys:
@@ -295,6 +329,8 @@ def main():
         exps.update()
         exps.draw(screen)
         score.update(screen)
+        items.update()
+        items.draw(screen)
         
         pg.display.update()
         tmr += 1
