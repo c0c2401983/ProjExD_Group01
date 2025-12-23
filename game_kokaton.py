@@ -293,13 +293,13 @@ class Rank():
             return "S"
 
     def update(self, screen: pg.Surface, tmr: int):
-        if (tmr // 60) < 15:
+        if (tmr // 60) < 30:
             rank = "D"
-        elif (tmr // 60) < 45:
+        elif (tmr // 60) < 60:
             rank = "C"
-        elif (tmr // 60) < 75:
+        elif (tmr // 60) < 120:
             rank = "B"
-        elif (tmr // 60) < 105:
+        elif (tmr // 60) < 180:
             rank = "A"
         else:
             rank = "S"
@@ -314,7 +314,8 @@ class Rank():
 def main():
     pg.display.set_caption("真！こうかとん無双")
     screen = pg.display.set_mode((WIDTH,HEIGHT))
-    bg_img = pg.image.load(f"fig/pg_bg.jpg")
+    bg_img = pg.image.load(f"fig/bg_moon_getsumen.jpg")
+    bg_img = pg.transform.scale(bg_img, (1600,900))
     bg_img2 = pg.transform.flip(bg_img,True,False)  # 横スクロール用の反転画像
     score = Score()
 
