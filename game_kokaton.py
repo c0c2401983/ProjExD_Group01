@@ -294,7 +294,7 @@ def main():
                 bird.speed = 20
             else:
                 bird.speed = 10
-
+        
                 
         screen.blit(bg_img, [0, 0])
         gravitys.update()
