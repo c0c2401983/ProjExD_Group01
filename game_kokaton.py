@@ -250,7 +250,7 @@ class Item(pg.sprite.Sprite):
         self.rect.center =  WIDTH, random.randint(0, HEIGHT)  # 画面右側のランダムな高さから出現
         self.vx, self.vy = random.randint(-10,-5),0  # ランダムな速度で左に流れる
         self.count = 0  
-        # self.hp = hp
+        self.hp = hp
 
     def get_item(self):
         """
