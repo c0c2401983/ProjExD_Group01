@@ -202,7 +202,9 @@ class Minbomb(pg.sprite.Sprite):
         self.vx, self.vy = calc_orientation(bomb.rect, bird.rect)
         self.vx -= 0.9  
         if self.vx == 0:
-            self.vx += 0.1
+            self.vx = 0.1
+        if self.vy == 0:
+            self.vy = 0.1
         self.rect.centerx = bomb.rect.centerx
         self.rect.centery = bomb.rect.centery+bomb.rect.height//2
         self.speed = random.randint(2,3)
@@ -235,6 +237,34 @@ class Explosion(pg.sprite.Sprite):
         self.rect = self.image.get_rect(center=obj.rect.center)
         self.life = life
 
+    def update(self):
+        """
+        爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
+        爆発エフェクトを表現する
+        """
+        self.life -= 1
+        self.image = self.imgs[self.life//10%2]
+        if self.life < 0:
+            self.kill()
+
+
+
+class Shot(pg.sprite.Sprite):
+    """
+    爆発に関するクラス
+    """
+    def __init__(self, obj: "Bomb|Enemy", life: int):
+        """
+        爆弾が爆発するエフェクトを生成する
+        引数1 obj：爆発するBombまたは敵機インスタンス
+        引数2 life：爆発時間
+        """
+        super().__init__()
+        img = pg.image.load(f"fig/explosion.gif")
+        self.imgs = [img, pg.transform.flip(img, 1, 1)]
+        self.image = self.imgs[0]
+        self.rect = self.image.get_rect(center=obj.rect.center)
+        self.life = life
     def update(self):
         """
         爆発時間を1減算した爆発経過時間_lifeに応じて爆発画像を切り替えることで
@@ -406,13 +436,13 @@ class Rank():
 
     def get_rank(self, tmr: int) -> str:
         total_sec = tmr // 60
-        if total_sec < 15:
+        if total_sec < 30:
             return "D"
-        elif total_sec < 45:
+        elif total_sec < 60:
             return "C"
-        elif total_sec < 75:
+        elif total_sec < 120:
             return "B"
-        elif total_sec < 105:
+        elif total_sec < 180:
             return "A"
         else:
             return "S"
@@ -495,9 +525,17 @@ class Item(pg.sprite.Sprite):
     def update(self):
         self.rect.move_ip(self.vx, self.vy)    
 
+class Click(pg.sprite.Sprite):
+    
+    def __init__(self,aim):
+        super().__init__
+        self.life = 5
+        
+
+        
 
 def main():
-    pg.display.set_caption("真！こうかとん無双")
+    pg.display.set_caption("シューティングゲーム")
     screen = pg.display.set_mode((WIDTH,HEIGHT))
     bg_img = pg.image.load(f"fig/bg_moon_getsumen.jpg")
     bg_img = pg.transform.scale(bg_img, (1600,900))
@@ -510,6 +548,7 @@ def main():
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     gravitys = pg.sprite.Group()
+    shots = pg.sprite.Group()
     count = Time()
     rank = Rank()
 
@@ -541,7 +580,7 @@ def main():
             
             if event.type == pg.KEYDOWN and event.key == pg.K_LSHIFT:
                 bird.speed = 20
-                return
+                
             else:
                 bird.speed = 10
             
@@ -549,7 +588,7 @@ def main():
                 if tmr-last_explosion_time >= EXP_COOLTIME: #クールタイム確認
                     if rl >= 1:
                         p = Point(pg.mouse.get_pos())
-                        exps.add(Explosion(p, 60))
+                        shots.add(Shot(p, 10))
                         last_explosion_time = tmr
                         rl -= 1
 
@@ -561,7 +600,7 @@ def main():
         screen.blit(bg_img, [-x, 0])  # 最初の背景画像（画面左端からスクロール量 -x の位置）
         screen.blit(bg_img2, [-x + 1600 ,0])  # 2枚目の背景画像（1枚目の右端から開始）
         screen.blit(bg_img, [-x + 3200, 0])  # 3枚目の背景画像（2枚目の右端から開始）
-        screen.blit(bg_img, [0, 0])
+        
         gravitys.update()
         gravitys.draw(screen)
         if tmr < 250:
@@ -611,10 +650,9 @@ def main():
                     emy.slow_speed()
 
 
-        #for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
-            #exps.add(Explosion(emy, 100))  # 爆発エフェクト
-            #score.value += 10  # 10点アップ
-            #bird.change_img(6, screen)  # こうかとん喜びエフェクト
+        for emy in pg.sprite.groupcollide(emys, shots , True, False).keys():  # ビームと衝突した敵機リスト
+            exps.add(Explosion(emy, 100))  # 爆発エフェクト
+            score.value += 10  # 10点アップ
 
 
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
@@ -643,7 +681,7 @@ def main():
             if hp.value <= 1:  # HPが1以下ならゲームオーバー
                 bird.change_img(8, screen)  # こうかとん悲しみエフェクト
                 score.update(screen)
-
+                gameover(screen, rank.get_rank(tmr))
                 pg.display.update()
                 time.sleep(2)
                 return
@@ -651,7 +689,8 @@ def main():
                 hp.value -= 1
             exps.add(Explosion(minbomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
-            
+        
+           
         # if len(gravitys)>0:
         #     for emy in emys:
         #         exps.add(Explosion(emy,50))  # 爆発エフェクト
@@ -661,12 +700,12 @@ def main():
         #         bomb.kill()
                 #exps.add(Explosion(bomb, 50))  # 爆発エフェクト
 
-        # for bomb in pg.sprite.spritecollide(p, bomb, True):#照準の接触判定
-        #     exps.add(Explosion(bomb,50))  # 爆発エフェクト
-        #     bomb.kill()
-        # for minbomb in pg.sprite.spritecollide(p, minbombs, True):#照準の接触判定
-        #     exps.add(Explosion(minbomb, 50))  # 爆発エフェクト
-        #     minbomb.kill()
+        for bomb in pg.sprite.groupcollide(bombs, shots, True,False):#照準の接触判定
+            exps.add(Explosion(bomb,50))  # 爆発エフェクト
+            bomb.kill()
+        for minbomb in pg.sprite.groupcollide(minbombs, shots, True,False):#照準の接触判定
+            exps.add(Explosion(minbomb, 50))  # 爆発エフェクト
+            minbomb.kill()
 
         # if len(gravitys)>0:
         #     for emy in emys:
@@ -680,8 +719,8 @@ def main():
         #     exps.add(Explosion(bomb, 50))  # 爆発エフェクト
         #     score.value += 1  # 1点アップ
 
-        for item in pg.sprite.spritecollide(bird, items, True): # アイテムとの衝突判定
-        # for item in pg.sprite.spritecollide(t, items, True): # アイテムとの衝突判定
+        #for item in pg.sprite.spritecollide(bird, items, True): # アイテムとの衝突判定
+        for item in pg.sprite.groupcollide(items, shots, True,False): # アイテムとの衝突判定
             if item.num == 0:  # 0番のアイテム(キャンディ)を取るとHPが1回復
                 if hp.value < 10:
                     hp.value += 1 
@@ -700,6 +739,7 @@ def main():
                         minbomb.kill()
             elif item.num == 2:  # 画面上の敵の減速
                 slow_timer = 200
+                rl += 5
                 # if len(emys) != 0:
                 #     for emy in emys:
                 #         emy.slow_speed()
@@ -731,7 +771,8 @@ def main():
         score.update(screen)
         count.update(screen, tmr)
         rank.update(screen,tmr)
-
+        shots.update()
+        shots.draw(screen)
         hp.update(screen)
         items.update()
         items.draw(screen)
