@@ -368,15 +368,15 @@ def main():
                     time.sleep(2)
                     return
                 else:  # HPが1より大きければHPが1減る
-                    if hp.value < 10:
-                        hp.value -= 1
+                    hp.value -= 1
             exps.add(Explosion(bomb, 50))  # 爆発エフェクト
             score.value += 1  # 1点アップ
 
         for item in pg.sprite.spritecollide(bird, items, True): # アイテムとの衝突判定
         # for item in pg.sprite.spritecollide(t, items, True): # アイテムとの衝突判定
             if item.num == 0:  # 0番のアイテム(キャンディ)を取るとHPが1回復
-                hp.value += 1 
+                if hp.value < 10:
+                    hp.value += 1 
             elif item.num == 1:  # 1番のアイテム(ストロベリー)を取ると画面上の敵を倒す
                 gravitys.add(Gravity(50))
                 if len(emys) != 0:
