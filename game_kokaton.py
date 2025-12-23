@@ -107,27 +107,30 @@ class Bomb(pg.sprite.Sprite):
     """
     爆弾に関するクラス
     """
-    colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)]
-
-    def __init__(self, emy: "Enemy", bird: Bird):
+    def __init__(self,  bird: Bird):
         """
         爆弾円Surfaceを生成する
         引数1 emy：爆弾を投下する敵機
         引数2 bird：攻撃対象のこうかとん
         """
         super().__init__()
-        rad = random.randint(10, 50)  # 爆弾円の半径：10以上50以下の乱数
+        rad = random.randint(15, 25)  # 爆弾円の半径：5以上20以下の乱数
         self.image = pg.Surface((2*rad, 2*rad))
-        color = random.choice(__class__.colors)  # 爆弾円の色：クラス変数からランダム選択
-        pg.draw.circle(self.image, color, (rad, rad), rad)
+        for r in range (rad, 0, -1):
+            alpha = int(250*(r/rad))
+            pg.draw.circle(self.image, (alpha,0,0), (rad, rad), r)
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
+        self.rect.center = WIDTH - 25, random.randint(0,HEIGHT)
+        self.vx, self.vy = -3, 0
+
+        
         # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
-        self.rect.centerx = emy.rect.centerx
-        self.rect.centery = emy.rect.centery+emy.rect.height//2
-        self.speed = 6
-        self.state="active"
+        # self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
+        # self.rect.centerx = emy.rect.centerx
+        # self.rect.centery = emy.rect.centery+emy.rect.height//2
+        self.speed = random.randint(2,4)
+        
 
     def update(self):
         """
@@ -135,9 +138,48 @@ class Bomb(pg.sprite.Sprite):
         引数 screen：画面Surface
         """
         self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+        self.rect
         if check_bound(self.rect) != (True, True):
             self.kill()
 
+class Minbomb(pg.sprite.Sprite):
+    """
+    爆弾に関するクラス
+    """
+    def __init__(self, bomb:Bomb,  bird: Bird):
+        """
+        爆弾円Surfaceを生成する
+        引数1 emy：爆弾を投下する敵機
+        引数2 bird：攻撃対象のこうかとん
+        """
+        super().__init__()
+        rad = 5  # 爆弾円の半径：5
+        self.image = pg.Surface((2*rad, 2*rad))
+        for r in range (rad, 0, -1):
+            alpha = int(250*(r/rad))
+            pg.draw.circle(self.image, (alpha,0,alpha), (rad, rad), r)
+        self.image.set_colorkey((0, 0, 0))
+        self.rect = self.image.get_rect()
+        self.rect.center = bomb.rect.center
+        self.vx, self.vy = +1, 0
+
+        
+        # 爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
+        # self.vx, self.vy = calc_orientation(emy.rect, bird.rect)  
+        # self.rect.centerx = emy.rect.centerx
+        # self.rect.centery = emy.rect.centery+emy.rect.height//2
+        self.speed = random.randint(2,3)
+        
+
+    def update(self):
+        """
+        爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
+        引数 screen：画面Surface
+        """
+        self.rect.move_ip(self.speed*self.vx, self.speed*self.vy)
+        self.rect
+        if check_bound(self.rect) != (True, True):
+            self.kill()
 
 class Explosion(pg.sprite.Sprite):
     """
@@ -229,6 +271,7 @@ def main():
 
     bird = Bird(3, (900, 400))
     bombs = pg.sprite.Group()
+    minbombs = pg.sprite.Group()
     exps = pg.sprite.Group()
     emys = pg.sprite.Group()
     gravitys = pg.sprite.Group()
@@ -251,9 +294,10 @@ def main():
         gravitys.update()
         gravitys.draw(screen)
 
-        #if tmr%200 == 0:  # 200フレームに1回，敵機を出現させる
-            #emys.add(Enemy())
-
+        if tmr >= 250 and tmr%50 == 0:  # 一定時間経過後に50フレームに1回，爆弾を出現させる
+            bombs.add(Bomb(bird))
+        elif tmr >= 500 and tmr%25 == 0:  # 一定時間経過後に25フレームに1回，爆弾を出現させる
+            bombs.add(Bomb(bird))
         #for emy in emys:
             #if emy.state == "stop" and tmr%emy.interval == 0:
                 # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
@@ -266,15 +310,14 @@ def main():
 
 
         for bomb in pg.sprite.spritecollide(bird, bombs, True):  # こうかとんと衝突した爆弾リスト
-            if bird.state != "hyper":  # 無敵状態でないならゲームオーバー
-                if bomb.state=="active":
+            # if bird.state != "hyper":  # 無敵状態でないならゲームオーバー
+            #     if bomb.state=="active":
                     bird.change_img(8, screen)  # こうかとん悲しみエフェクト
                     score.update(screen)
                     pg.display.update()
                     time.sleep(2)
                     return
-            exps.add(Explosion(bomb, 50))  # 爆発エフェクト
-            score.value += 1  # 1点アップ
+                #exps.add(Explosion(bomb, 50))  # 爆発エフェクト
     
         if len(gravitys)>0:
             for emy in emys:
@@ -292,6 +335,8 @@ def main():
         emys.draw(screen)
         bombs.update()
         bombs.draw(screen)
+        minbombs.update()
+        minbombs.draw(screen)
         exps.update()
         exps.draw(screen)
         score.update(screen)
