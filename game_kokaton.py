@@ -271,11 +271,11 @@ def main():
         gravitys.update()
         gravitys.draw(screen)
         if tmr < 250:
-            spawn_interval = 300  # 
+            spawn_interval = 300  # 300フレームごとに敵出現
         elif tmr < 750:
-            spawn_interval = 200  # 
+            spawn_interval = 200  # 200フレームごとに敵出現
         else:
-            spawn_interval = 100  #
+            spawn_interval = 150  # 150フレームごとに敵出現
         if tmr % spawn_interval == 0:
             emys.add(Enemy()) 
 
