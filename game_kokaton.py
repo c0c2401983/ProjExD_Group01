@@ -172,6 +172,8 @@ class Minbomb(pg.sprite.Sprite):
         #爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
         self.vx, self.vy = calc_orientation(bomb.rect, bird.rect)
         self.vx -= 0.9  
+        if self.vx == 0:
+            self.vx += 0.1
         self.rect.centerx = bomb.rect.centerx
         self.rect.centery = bomb.rect.centery+bomb.rect.height//2
         self.speed = random.randint(2,3)
