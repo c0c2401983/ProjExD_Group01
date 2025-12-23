@@ -42,10 +42,10 @@ class Bird(pg.sprite.Sprite):
     ゲームキャラクター（こうかとん）に関するクラス
     """
     delta = {  # 押下キーと移動量の辞書
-        pg.K_UP: (0, -1),
-        pg.K_DOWN: (0, +1),
-        pg.K_LEFT: (-1, 0),
-        pg.K_RIGHT: (+1, 0),
+        pg.K_w: (0, -1),
+        pg.K_s: (0, +1),
+        pg.K_a: (-1, 0),
+        pg.K_d: (+1, 0),
     }
 
     def __init__(self, num: int, xy: tuple[int, int]):
@@ -107,23 +107,32 @@ class Bomb(pg.sprite.Sprite):
     """
     爆弾に関するクラス
     """
-    def __init__(self,  bird: Bird):
+    def __init__(self,):
         """
-        爆弾円Surfaceを生成する
-        引数1 emy：爆弾を投下する敵機
-        引数2 bird：攻撃対象のこうかとん
+        左から右に流れる爆弾円Surfaceを生成する
         """
         super().__init__()
         rad = random.randint(15, 25)  # 爆弾円の半径：5以上20以下の乱数
         self.image = pg.Surface((2*rad, 2*rad))
-        for r in range (rad, 0, -1):
-            alpha = int(250*(r/rad))
-            pg.draw.circle(self.image, (alpha,0,0), (rad, rad), r)
+        self.color = random.randint(1,3)  # ランダムで色を決定する
+        if self.color == 1:
+            for r in range (rad, 0, -1):
+                alpha = int(250*(r/rad))
+                pg.draw.circle(self.image, (alpha,0,0), (rad, rad), r)
+        if self.color == 2:
+            for r in range (rad, 0, -1):
+                alpha = int(250*(r/rad))
+                pg.draw.circle(self.image, (0,alpha,0), (rad, rad), r)
+        if self.color == 3:
+            for r in range (rad, 0, -1):
+                alpha = int(250*(r/rad))
+                pg.draw.circle(self.image, (0,0,alpha), (rad, rad), r)
+
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         self.rect.center = WIDTH - 25, random.randint(0,HEIGHT)
         self.vx, self.vy = -3, 0
-        self.speed = random.randint(2,4)
+        self.speed = random.randint(2,3)
         self.interval = random.randint(50,300)
         
 
@@ -150,17 +159,19 @@ class Minbomb(pg.sprite.Sprite):
         super().__init__()
         rad = 5  # 爆弾円の半径：5
         self.image = pg.Surface((2*rad, 2*rad))
+        self.color = 250
         for r in range (rad, 0, -1):
-            alpha = int(250*(r/rad))
+            alpha = int(self.color*(r/rad))
             pg.draw.circle(self.image, (alpha,0,alpha), (rad, rad), r)
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         self.rect.center = bomb.rect.center
-        self.vx, self.vy = +1, 0
+        self.vx, self.vy = 0, 0
 
         
         #爆弾を投下するemyから見た攻撃対象のbirdの方向を計算
-        self.vx, self.vy = calc_orientation(bomb.rect, bird.rect)  
+        self.vx, self.vy = calc_orientation(bomb.rect, bird.rect)
+        self.vx -= 0.9  
         self.rect.centerx = bomb.rect.centerx
         self.rect.centery = bomb.rect.centery+bomb.rect.height//2
         self.speed = random.randint(2,3)
@@ -290,15 +301,19 @@ def main():
         gravitys.draw(screen)
 
         if tmr >= 250 and tmr%50 == 0:  # 一定時間経過後に50フレームに1回，爆弾を出現させる
-            bombs.add(Bomb(bird))
+            bombs.add(Bomb())
         elif tmr >= 500 and tmr%25 == 0:  # 一定時間経過後に25フレームに1回，爆弾を出現させる
-            bombs.add(Bomb(bird))
-
-        for bomb in bombs:
-            if  tmr%bomb.interval == 0:
-                #intervalに応じて爆弾投下
-                minbombs.add(Minbomb(bomb, bird))
-
+            bombs.add(Bomb())
+        if tmr >= 1000:
+            for bomb in bombs: #大きい爆弾から,追従する小さい爆弾を出現させる
+                if  tmr%bomb.interval == 0:
+                    #intervalに応じて爆弾投下
+                    minbombs.add(Minbomb(bomb, bird))
+        if tmr >= 1500:
+            for bomb in bombs: #大きい爆弾から,追従する小さい爆弾を出現させる
+                if  tmr%bomb.interval == 100:
+                    #intervalに応じて爆弾投下
+                    minbombs.add(Minbomb(bomb, bird))
         #for emy in pg.sprite.groupcollide(emys, beams, True, True).keys():  # ビームと衝突した敵機リスト
             #exps.add(Explosion(emy, 100))  # 爆発エフェクト
             #score.value += 10  # 10点アップ
@@ -325,10 +340,10 @@ def main():
                     return
                 #exps.add(Explosion(bomb, 50))  # 爆発エフェクト
 
-        # for bomb in pg.sprite.spritecollide(, bomb, True):#照準の接触判定
+        # for bomb in pg.sprite.spritecollide(p, bomb, True):#照準の接触判定
         #     exps.add(Explosion(bomb,50))  # 爆発エフェクト
         #     bomb.kill()
-        # for minbomb in pg.sprite.spritecollide(, minbombs, True):#照準の接触判定
+        # for minbomb in pg.sprite.spritecollide(p, minbombs, True):#照準の接触判定
         #     exps.add(Explosion(minbomb, 50))  # 爆発エフェクト
         #     minbomb.kill()
 
