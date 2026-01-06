@@ -621,8 +621,6 @@ def main():
             bombs.add(Bomb())
         elif tmr >= 500 and tmr%25 == 0:  # 一定時間経過後に25フレームに1回，爆弾を出現させる
             bombs.add(Bomb())
-        elif tmr >= 1500 and tmr%10 == 0:  # 一定時間経過後に25フレームに1回，爆弾を出現させる
-            bombs.add(Bomb())
         if tmr >= 1000:
             for bomb in bombs: #大きい爆弾から,追従する小さい爆弾を出現させる
                 if  tmr%bomb.interval == 0:
