@@ -642,7 +642,7 @@ def main():
         #         # 敵機が停止状態に入ったら，intervalに応じて爆弾投下
         #         bombs.add(Bomb(emy, bird))
 
-        if tmr%250 == 0:  # 100フレームに1回，アイテムを出現させる
+        if tmr%250 == 0:  # 250フレームに1回，アイテムを出現させる
             items.add(Item(hp))
 
         if slow_timer != 0:
